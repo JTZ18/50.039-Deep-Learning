@@ -1,3 +1,5 @@
+from torch import nn
+
 class Unet(nn.Module):
     def __init__(self, in_channels=3, out_channels=1):
         super(Unet, self).__init__()
