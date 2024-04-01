@@ -315,3 +315,17 @@ class MALUNet(nn.Module):
         out0 = F.interpolate(self.final(out1),scale_factor=(2,2),mode ='bilinear',align_corners=True) # b, num_class, H, W
 
         return torch.sigmoid(out0)
+
+if __name__ == '__main__':
+    # Instantiate the model
+    model = MALUNet()
+    print(model)
+
+    # Create a random tensor of shape (batch_size, channels, height, width)
+    input_tensor = torch.rand(1, 3, 256, 256)
+
+    # Pass the tensor through the model
+    output = model(input_tensor)
+
+    # Check the output shape
+    print(output.shape)
