@@ -119,3 +119,6 @@ dmypy.json
 wandb
 .vscode
 .DS_Store
+saved_images
+checkpoints
+seg-former-checkpoints
