@@ -100,11 +100,20 @@ def get_loaders(
 
     return train_loader, val_loader, test_loader
 
-def check_accuracy(loader, model, device="cuda"):
+def check_accuracy(loader, model, device="cuda", loss_fn=None, mode="val"):
+    """To compute metrics after one training epoch
+
+    Args:
+        loader (pytorch DataLoader): train, val, test loaders
+        model (pytorch model): model
+        device (str, optional): Defaults to "cuda".
+        loss_fn (pytorch loss fn, optional): To test for validation or test loss. Defaults to None.
+        mode (str, optional): For wandb logging purposes to log the metrics with a different label for validation / test. \nPossible values ["val", "test"].\n Defaults to "val".
+    """
     num_correct = 0
     num_pixels = 0
     dice_score = 0
-    iou_score = 0
+    val_loss = 0
     model.eval()
 
     with torch.no_grad():
@@ -112,36 +121,42 @@ def check_accuracy(loader, model, device="cuda"):
             x = x.to(device)
             y = y.to(device).unsqueeze(1)
             preds = torch.sigmoid(model(x))
+
+            # Track validation Loss
+            if loss_fn:
+                loss = loss_fn(preds, y)
+                val_loss += loss.item()
+
             preds = (preds > 0.5).float()
             num_correct += (preds == y).sum()
             num_pixels += torch.numel(preds)
             dice_score += (2 * (preds * y).sum()) / (
                 (preds + y).sum() + 1e-8
             )
-            iou_score += iou_pytorch(preds, y)  # Calculate IoU score for the batch
-
+    avg_val_loss = val_loss / len(loader)
     pixel_accuracy = num_correct / num_pixels * 100
-    print(f"dice_score: {dice_score}")
     dice_score = dice_score / len(loader)
-    print(f"Got {num_correct}/{num_pixels} with acc {pixel_accuracy:.2f}")
-    wandb.log({"Pixel Accuracy": pixel_accuracy})
-    print(f"Dice score: {dice_score}")
-    wandb.log({"Dice Score": dice_score})
-    print(f"IoU score: {iou_score}")  # Print IoU score to the console
-    wandb.log({"IoU Score": iou_score})
+
+    if mode == "val":
+        print(f'Validation Loss: {avg_val_loss}')
+        wandb.log({"Validation Loss": avg_val_loss})
+
+        print(f"Got {num_correct}/{num_pixels} with acc {pixel_accuracy:.2f}")
+        wandb.log({"Pixel Accuracy": pixel_accuracy})
+
+        print(f"Dice score: {dice_score}")
+        wandb.log({"Dice Score": dice_score})
+
+    if mode == "test":
+        print(f"Test Loss: {avg_val_loss}")
+        wandb.log({"Test Loss": avg_val_loss})
+
+        print(f"Got {num_correct}/{num_pixels} with acc {pixel_accuracy:.2f}")
+        wandb.log({"Test Pixel Accuracy": pixel_accuracy})
+
+        print(f"Dice score: {dice_score}")
+        wandb.log({"Test Dice Score": dice_score})
     model.train()
-
-def iou_pytorch(outputs: torch.Tensor, labels: torch.Tensor):
-    # Convert tensors to 'Bool' type
-    outputs_int = outputs.int()
-    labels_int = labels.int()
-
-    intersection = (outputs_int & labels_int).float().sum((1, 2))  # Will be zero if Truth=0 or Prediction=0
-    union = (outputs_int | labels_int).float().sum((1, 2))  # Will be zero if both are 0
-
-    iou = (intersection + 1e-6) / (union + 1e-6)  # We smooth our division to avoid 0/0
-
-    return iou.mean()  # Average over the batch
 
 
 def save_predictions_as_imgs(
