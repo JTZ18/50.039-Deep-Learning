@@ -7,16 +7,17 @@ import math
 
 
 class DepthWiseConv2d(nn.Module):
-    def __init__(self, dim_in, dim_out, kernel_size=3, padding=1, stride=1, dilation=1):
+    def __init__(self, dim_in, dim_out, kernel_size=3, padding=1, stride=1, dilation=1, dropout_rate=0.1):
         super().__init__()
 
         self.conv1 = nn.Conv2d(dim_in, dim_in, kernel_size=kernel_size, padding=padding,
                       stride=stride, dilation=dilation, groups=dim_in)
         self.norm_layer = nn.GroupNorm(4, dim_in)
+        self.dropout = nn.Dropout(dropout_rate)
         self.conv2 = nn.Conv2d(dim_in, dim_out, kernel_size=1)
 
     def forward(self, x):
-        return self.conv2(self.norm_layer(self.conv1(x)))
+        return self.conv2(self.dropout(self.norm_layer(self.conv1(x))))
 
 class GatedAttentionUnit(nn.Module):
     def __init__(self, in_c, out_c, kernel_size):

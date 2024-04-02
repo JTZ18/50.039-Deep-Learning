@@ -108,7 +108,8 @@ class MixFeedForward(nn.Module):
         self,
         *,
         dim,
-        expansion_factor
+        expansion_factor,
+        dropout=0.1
     ):
         super().__init__()
         hidden_dim = dim * expansion_factor
@@ -116,6 +117,7 @@ class MixFeedForward(nn.Module):
             nn.Conv2d(dim, hidden_dim, 1),
             DsConv2d(hidden_dim, hidden_dim, 3, padding = 1),
             nn.GELU(),
+            nn.Dropout(dropout),
             nn.Conv2d(hidden_dim, dim, 1)
         )
 
@@ -135,7 +137,8 @@ class MiT(nn.Module):
         heads,
         ff_expansion,
         reduction_ratio,
-        num_layers
+        num_layers,
+        dropout
     ):
         super().__init__()
         stage_kernel_stride_pad = ((7, 4, 3), (3, 2, 1), (3, 2, 1), (3, 2, 1))
@@ -204,7 +207,8 @@ class Segformer(nn.Module):
         num_layers = 2,
         channels = 3,
         decoder_dim = 256,
-        num_classes = 1
+        num_classes = 1,
+        dropout = 0.1
     ):
         super().__init__()
         dims, heads, ff_expansion, reduction_ratio, num_layers = map(partial(cast_tuple, depth = 4), (dims, heads, ff_expansion, reduction_ratio, num_layers))
@@ -216,7 +220,8 @@ class Segformer(nn.Module):
             heads = heads,
             ff_expansion = ff_expansion,
             reduction_ratio = reduction_ratio,
-            num_layers = num_layers
+            num_layers = num_layers,
+            dropout = dropout
         )
 
         self.to_fused = nn.ModuleList([nn.Sequential(
@@ -226,6 +231,7 @@ class Segformer(nn.Module):
 
         self.to_segmentation = nn.Sequential(
             nn.Conv2d(4 * decoder_dim, decoder_dim, 1),
+            nn.Dropout(dropout),
             nn.Conv2d(decoder_dim, num_classes, 1),
         )
 
