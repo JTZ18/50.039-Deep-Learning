@@ -5,8 +5,7 @@ import torch.nn as nn
 from monai.networks.layers.factories import Conv, Norm, Act
 
 from src.swin.padding import unpad_to_align
-from src.swin.swin import Swin
-
+from src.swin.swin import Swin, PatchEmbedding
 
 class SwinUNETR(nn.Module):
     """The SwinUNETR module."""
@@ -20,6 +19,22 @@ class SwinUNETR(nn.Module):
 
     def __init__(self, opt: Options):
         super().__init__()
+
+        opt = SwinUNETR.Options(
+            output_channel=3,
+            swin_options=Swin.Options(
+                window_size=7,
+                stage_depths=[2, 2, 2, 2],
+                stage_num_heads=[3, 6, 12, 24],
+                block_mlp_ratio=4,
+                embed_options=PatchEmbedding.Options(
+                    num_dim=3,
+                    patch_size=2,
+                    input_channel=4,
+                    output_channel=3,
+                ),
+            ),
+        )
 
         self.options = opt
         sopt = opt.swin_options
