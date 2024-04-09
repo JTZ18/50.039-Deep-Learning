@@ -46,6 +46,9 @@ class GreenBlock(nn.Module):
 class UNETR(nn.Module):
     def __init__(self, img_shape=(256, 256), input_dim=3, output_dim=1, embed_dim=768, patch_size=16, num_heads=12, dropout=0.1):
         """ 
+            NOTE: img_size must be a multiple of patch_size
+            NOTE: embed_dim must be a multiple of num_heads
+
             img_shape: Dimension of image
             input_dim: Number of color channels
             output_dim: Number of output channels
@@ -55,10 +58,10 @@ class UNETR(nn.Module):
             dropout: Dropout rate
         """
         super().__init__()
+        self.img_shape = img_shape
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.embed_dim = embed_dim
-        self.img_shape = img_shape
         self.patch_size = patch_size
         self.num_heads = num_heads
         self.dropout = dropout

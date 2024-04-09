@@ -37,7 +37,7 @@ class Embeddings(nn.Module):
     
 class SelfAttention(nn.Module):
     """ Self-attention Block """
-    def __init__(self, num_heads, embed_dim, dropout):
+    def __init__(self, embed_dim, num_heads, dropout):
         """
             num_heads: Number of attention heads
             embed_dim: Embedding dimension
@@ -69,7 +69,7 @@ class SelfAttention(nn.Module):
     
 
 class PositionwiseFeedForward(nn.Module):
-    "" "Implements FFN equation, commonly found everywhere """
+    "" "Implements FFN equation, based on original paper """
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
         self.w_1 = nn.Linear(d_model, d_ff)
@@ -81,7 +81,7 @@ class PositionwiseFeedForward(nn.Module):
     
 class TransformerBlock(nn.Module):
     """ Transformer Block """
-    def __init__(self, embed_dim, num_heads, dropout, img_size, patch_size):
+    def __init__(self, embed_dim, num_heads, dropout):
         """
             embed_dim: Embedding dimension
             num_heads: Number of attention heads
@@ -91,10 +91,10 @@ class TransformerBlock(nn.Module):
         """
         super().__init__()
         self.attn_norm = nn.LayerNorm(embed_dim, eps=1e-6)
-        self.attn = SelfAttention(num_heads, embed_dim, dropout)
+        self.attn = SelfAttention(embed_dim, num_heads, dropout)
 
         self.mlp_norm = nn.LayerNorm(embed_dim, eps=1e-6)
-        self.mlp = PositionwiseFeedForward(embed_dim, 2048) # Based on the original paper
+        self.mlp = PositionwiseFeedForward(embed_dim, 2048, dropout)
 
     def forward(self, x):
         x = x + self.attn(self.attn_norm(x))
@@ -104,6 +104,18 @@ class TransformerBlock(nn.Module):
 class ViT(nn.Module):
     """ Vision Transformer modified to extract hidden states from specified layers """
     def __init__(self, input_dim, embed_dim, img_size, patch_size, num_heads, num_layers, dropout):
+        """
+            NOTE: img_size must be a multiple of patch_size
+            NOTE: embed_dim must be a multiple of num_heads
+
+            input_dim: Number of color channels
+            embed_dim: Embedding dimension
+            img_size: Dimension of image
+            patch_size: Patch size
+            num_heads: Number of attention heads
+            num_layers: Number of transformer layers
+            dropout: Dropout rate
+        """
         super().__init__()
         self.embeddings = Embeddings(input_dim, embed_dim, img_size, patch_size, dropout)
 
