@@ -17,6 +17,7 @@ Before running the code, please follow these setup instructions:
   ```bash
   chmod +x setup.sh
   ```
+  If the installation fails, you can manually download the `checkpoints.zip` file from [this link](https://storage.googleapis.com/dl-project-checkpoints/checkpoints.zip) and unzip it into a `checkpoints` folder in the root project directory on the same level as notebooks, sota, src folders.
 
 2. Install the required Python dependencies. You can do this with the following command:
 
