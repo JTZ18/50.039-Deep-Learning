@@ -4,6 +4,7 @@ import torchvision
 from torch.utils.data import DataLoader
 import wandb
 import numpy as np
+import torch.nn.functional as F
 
 class OneClassDataset(torch.utils.data.Dataset):
     def __init__(self, dataset=None, split="train", transform=None):
@@ -38,10 +39,14 @@ def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
     # Save the checkpoint to the 'checkpoints' directory
     torch.save(state, os.path.join("checkpoints", filename))
 
-def load_checkpoint(checkpoint, model, optimizer):
+def load_checkpoint(checkpoint, model, optimizer=None):
+    """
+    Load model and optimizer from a given checkpoint\n
+    returns model, optimizer, epoch of loaded checkpoint
+    """
     print("=> Loading checkpoint")
     model.load_state_dict(checkpoint["state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer"])
+    optimizer.load_state_dict(checkpoint["optimizer"]) if optimizer else None
     epoch = checkpoint["epoch"]
     return model, optimizer, epoch
 
@@ -100,7 +105,7 @@ def get_loaders(
 
     return train_loader, val_loader, test_loader
 
-def check_accuracy(loader, model, device="cuda", loss_fn=None, mode="val"):
+def check_accuracy(loader, model, device="cuda", loss_fn=None, mode="val", wandb=True, img_dims=(256, 256)):
     """To compute metrics after one training epoch
 
     Args:
@@ -109,6 +114,8 @@ def check_accuracy(loader, model, device="cuda", loss_fn=None, mode="val"):
         device (str, optional): Defaults to "cuda".
         loss_fn (pytorch loss fn, optional): To test for validation or test loss. Defaults to None.
         mode (str, optional): For wandb logging purposes to log the metrics with a different label for validation / test. \nPossible values ["val", "test"].\n Defaults to "val".
+        wandb (bool, optional): To log the metrics to wandb. Defaults to True.
+        img_dims (tuple, optional): Image dimensions that model being tested accepts. Defaults to (256, 256).
     """
     num_correct = 0
     num_pixels = 0
@@ -120,6 +127,12 @@ def check_accuracy(loader, model, device="cuda", loss_fn=None, mode="val"):
         for x, y in loader:
             x = x.to(device)
             y = y.to(device).unsqueeze(1)
+
+            if img_dims != (256, 256):
+                # Resize to fit sota models
+                x = F.interpolate(x, size=img_dims)
+                y = F.interpolate(y, size=img_dims)
+
             preds = torch.sigmoid(model(x))
 
             # Track validation Loss
@@ -139,23 +152,23 @@ def check_accuracy(loader, model, device="cuda", loss_fn=None, mode="val"):
 
     if mode == "val":
         print(f'Validation Loss: {avg_val_loss}')
-        wandb.log({"Validation Loss": avg_val_loss})
+        wandb.log({"Validation Loss": avg_val_loss}) if wandb else None
 
         print(f"Got {num_correct}/{num_pixels} with acc {pixel_accuracy:.2f}")
-        wandb.log({"Pixel Accuracy": pixel_accuracy})
+        wandb.log({"Pixel Accuracy": pixel_accuracy}) if wandb else None
 
         print(f"Dice score: {dice_score}")
-        wandb.log({"Dice Score": dice_score})
+        wandb.log({"Dice Score": dice_score}) if wandb else None
 
     if mode == "test":
-        print(f"Test Loss: {avg_val_loss}")
-        wandb.log({"Test Loss": avg_val_loss})
+        # print(f"Test Loss: {avg_val_loss}")
+        wandb.log({"Test Loss": avg_val_loss}) if wandb else None
 
         print(f"Got {num_correct}/{num_pixels} with acc {pixel_accuracy:.2f}")
-        wandb.log({"Test Pixel Accuracy": pixel_accuracy})
+        wandb.log({"Test Pixel Accuracy": pixel_accuracy}) if wandb else None
 
         print(f"Dice score: {dice_score}")
-        wandb.log({"Test Dice Score": dice_score})
+        wandb.log({"Test Dice Score": dice_score}) if wandb else None
     model.train()
 
 
