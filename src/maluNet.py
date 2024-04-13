@@ -7,7 +7,7 @@ import math
 
 
 class DepthWiseConv2d(nn.Module):
-    def __init__(self, dim_in, dim_out, kernel_size=3, padding=1, stride=1, dilation=1, dropout_rate=0.1):
+    def __init__(self, dim_in, dim_out, kernel_size=3, padding=1, stride=1, dilation=1, dropout_rate=0):
         super().__init__()
 
         self.conv1 = nn.Conv2d(dim_in, dim_in, kernel_size=kernel_size, padding=padding,
@@ -20,19 +20,19 @@ class DepthWiseConv2d(nn.Module):
         return self.conv2(self.dropout(self.norm_layer(self.conv1(x))))
 
 class GatedAttentionUnit(nn.Module):
-    def __init__(self, in_c, out_c, kernel_size):
+    def __init__(self, in_c, out_c, kernel_size, dropout_rate=0):
         super().__init__()
         self.w1 = nn.Sequential(
-            DepthWiseConv2d(in_c, in_c, kernel_size, padding=kernel_size//2),
+            DepthWiseConv2d(in_c, in_c, kernel_size, padding=kernel_size//2, dropout_rate=dropout_rate),
             nn.Sigmoid()
         )
 
         self.w2 = nn.Sequential(
-            DepthWiseConv2d(in_c, in_c, kernel_size + 2, padding=(kernel_size + 2)//2),
+            DepthWiseConv2d(in_c, in_c, kernel_size + 2, padding=(kernel_size + 2)//2, dropout_rate=dropout_rate),
             nn.GELU()
         )
         self.wo = nn.Sequential(
-            DepthWiseConv2d(in_c, out_c, kernel_size),
+            DepthWiseConv2d(in_c, out_c, kernel_size, dropout_rate=dropout_rate),
             nn.GELU()
         )
 
@@ -45,7 +45,7 @@ class GatedAttentionUnit(nn.Module):
 
 
 class DilatedGatedAttention(nn.Module):
-    def __init__(self, in_c, out_c, k_size=3, dilated_ratio=[7, 5, 2, 1]):
+    def __init__(self, in_c, out_c, k_size=3, dilated_ratio=[7, 5, 2, 1], dropout_rate=0):
         super().__init__()
 
         self.mda0 = nn.Conv2d(in_c//4, in_c//4, kernel_size=k_size, stride=1,
@@ -63,7 +63,7 @@ class DilatedGatedAttention(nn.Module):
         self.norm_layer = nn.GroupNorm(4, in_c)
         self.conv = nn.Conv2d(in_c, in_c, 1)
 
-        self.gau = GatedAttentionUnit(in_c, out_c, 3)
+        self.gau = GatedAttentionUnit(in_c, out_c, 3, dropout_rate=dropout_rate)
 
     def forward(self, x):
         x = torch.chunk(x, 4, dim=1)
@@ -198,7 +198,7 @@ class SC_Att_Bridge(nn.Module):
 class MALUNet(nn.Module):
 
     def __init__(self, num_classes=1, input_channels=3, c_list=[8,16,24,32,48,64],
-                split_att='fc', bridge=True):
+                split_att='fc', bridge=True, dropout_rate=0):
         super().__init__()
 
         self.bridge = bridge
@@ -214,15 +214,15 @@ class MALUNet(nn.Module):
         )
         self.encoder4 = nn.Sequential(
             EAblock(c_list[2]),
-            DilatedGatedAttention(c_list[2], c_list[3]),
+            DilatedGatedAttention(c_list[2], c_list[3], dropout_rate=dropout_rate),
         )
         self.encoder5 = nn.Sequential(
             EAblock(c_list[3]),
-            DilatedGatedAttention(c_list[3], c_list[4]),
+            DilatedGatedAttention(c_list[3], c_list[4], dropout_rate=dropout_rate),
         )
         self.encoder6 = nn.Sequential(
             EAblock(c_list[4]),
-            DilatedGatedAttention(c_list[4], c_list[5]),
+            DilatedGatedAttention(c_list[4], c_list[5], dropout_rate=dropout_rate),
         )
 
         if bridge:
@@ -230,15 +230,15 @@ class MALUNet(nn.Module):
             print('SC_Att_Bridge was used')
 
         self.decoder1 = nn.Sequential(
-            DilatedGatedAttention(c_list[5], c_list[4]),
+            DilatedGatedAttention(c_list[5], c_list[4], dropout_rate=dropout_rate),
             EAblock(c_list[4]),
         )
         self.decoder2 = nn.Sequential(
-            DilatedGatedAttention(c_list[4], c_list[3]),
+            DilatedGatedAttention(c_list[4], c_list[3], dropout_rate=dropout_rate),
             EAblock(c_list[3]),
         )
         self.decoder3 = nn.Sequential(
-            DilatedGatedAttention(c_list[3], c_list[2]),
+            DilatedGatedAttention(c_list[3], c_list[2], dropout_rate=dropout_rate),
             EAblock(c_list[2]),
         )
         self.decoder4 = nn.Sequential(
@@ -319,7 +319,7 @@ class MALUNet(nn.Module):
 
 if __name__ == '__main__':
     # Instantiate the model
-    model = MALUNet()
+    model = MALUNet(dropout_rate=0.1)
     print(model)
 
     # Create a random tensor of shape (batch_size, channels, height, width)

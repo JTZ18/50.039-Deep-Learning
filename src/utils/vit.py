@@ -3,10 +3,10 @@ import torch.nn.functional as F
 import torch
 from einops.layers.torch import Rearrange
 
-""" 
-    Adapted from: 
+"""
+    Adapted from:
         https://github.com/tamasino52/UNETR/blob/main/unetr.py
-        https://github.com/Project-MONAI/research-contributions/tree/main/UNETR/BTCV 
+        https://github.com/Project-MONAI/research-contributions/tree/main/UNETR/BTCV
 """
 
 class Embeddings(nn.Module):
@@ -34,7 +34,7 @@ class Embeddings(nn.Module):
         embeddings = x + self.position_embeddings
         embeddings = self.dropout(embeddings)
         return embeddings
-    
+
 class SelfAttention(nn.Module):
     """ Self-attention Block """
     def __init__(self, embed_dim, num_heads, dropout):
@@ -46,7 +46,7 @@ class SelfAttention(nn.Module):
         super().__init__()
         self.num_heads = num_heads
         self.head_dim = embed_dim // num_heads
-        
+
         self.qkv = nn.Linear(embed_dim, embed_dim * 3, bias=False)
         self.input_rearrange = Rearrange("b h (qkv l d) -> qkv b l h d", qkv=3, l=num_heads)
         self.out_rearrange = Rearrange("b h l d -> b l (h d)")
@@ -66,7 +66,7 @@ class SelfAttention(nn.Module):
         x = self.out_rearrange(x)
         x = self.proj_dropout(self.out_proj(x))
         return x
-    
+
 
 class PositionwiseFeedForward(nn.Module):
     "" "Implements FFN equation, based on original paper """
@@ -78,7 +78,7 @@ class PositionwiseFeedForward(nn.Module):
 
     def forward(self, x):
         return self.w_2(self.dropout(F.relu(self.w_1(x))))
-    
+
 class TransformerBlock(nn.Module):
     """ Transformer Block """
     def __init__(self, embed_dim, num_heads, dropout):
@@ -86,8 +86,6 @@ class TransformerBlock(nn.Module):
             embed_dim: Embedding dimension
             num_heads: Number of attention heads
             dropout: Dropout rate
-            img_size: Dimension of image
-            patch_size: Patch size
         """
         super().__init__()
         self.attn_norm = nn.LayerNorm(embed_dim, eps=1e-6)
@@ -100,7 +98,7 @@ class TransformerBlock(nn.Module):
         x = x + self.attn(self.attn_norm(x))
         x = x + self.mlp(self.mlp_norm(x))
         return x
-    
+
 class ViT(nn.Module):
     """ Vision Transformer modified to extract hidden states from specified layers """
     def __init__(self, input_dim, embed_dim, img_size, patch_size, num_heads, num_layers, dropout):
@@ -121,7 +119,7 @@ class ViT(nn.Module):
 
         self.blocks = nn.ModuleList(
             [
-                TransformerBlock(embed_dim, num_heads, dropout, img_size, patch_size)
+                TransformerBlock(embed_dim, num_heads, dropout)
                 for i in range(num_layers)
             ]
         )

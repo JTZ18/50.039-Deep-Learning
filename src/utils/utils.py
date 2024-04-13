@@ -59,7 +59,7 @@ def get_loaders(
         transform=train_transform,
     )
 
-    # # Use only the first 100 samples of the dataset
+    # Use only the first 100 samples of the dataset
     # train_ds = torch.utils.data.Subset(train_ds, range(100))
 
     train_loader = DataLoader(
