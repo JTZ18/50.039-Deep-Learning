@@ -123,3 +123,5 @@ saved_images
 checkpoints
 seg-former-checkpoints
 unet-checkpoints
+segformer-checkpoints
+unetr-checkpoints
