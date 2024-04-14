@@ -55,3 +55,21 @@ We compared the performance of our models with that of the state-of-the-art Tran
 To validate our test results, you can run the `evaluation.ipynb` Jupyter notebook. This notebook loads the trained weights of each model and computes the Dice Score on the test set.
 
 Before running the notebook, make sure you have the `checkpoints` folder in your project directory. This folder should contain the trained weights for all the models. You can obtain this folder by running the `setup.sh` script as described in the Setup section.
+
+## Reproducing sweeps, training, and evaluation
+Note that you will have to set up a WandB account and configure your CLI to run the codes correctly.
+
+### Sweeps
+1. Go to `notebooks/sweeps.ipynb`
+2. Scroll to the section on "Training Loop" to comment out the model of choice. 
+3. Scroll to the section on "Init Wandb" and change the number of `run_cap` in the configuration. For U-net: 43, UNETR: 65, SegFormer: 39.
+4. Run the entire notebook and wait for the number of desired sweeps to complete. 
+### Training
+1. Go to `notebooks/train.ipynb`
+2. Scroll to the section on "Training Loop" to comment out the model of choice. The models have already been pre-loaded with the best hyperparameters from the sweeps section.
+3. Run the entire notebook and wait for 10 epochs to complete.
+
+### Evaluation
+1. Go to `notebooks/evaluation.ipynb`
+2. Download the weights from [this link](https://storage.googleapis.com/dl-project-checkpoints/checkpoints.zip) and unzip it into the `notebooks/checkpoints` folder.
+3. Run the entire notebook.
