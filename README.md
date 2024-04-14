@@ -8,30 +8,31 @@ Before running the code, please follow these setup instructions:
 
 1. Run the `setup.sh` script. This script downloads a `checkpoints.zip` file and unzips it into a `checkpoints` folder. You can run the script with the following command:
 
-  ```bash
-  ./setup.sh
-  ```
+```bash
+./setup.sh
+```
 
-  Make sure the script is executable. If it's not, you can make it executable with the following command:
+Make sure the script is executable. If it's not, you can make it executable with the following command:
 
-  ```bash
-  chmod +x setup.sh
-  ```
-  If the installation fails, you can manually download the `checkpoints.zip` file from [this link](https://storage.googleapis.com/dl-project-checkpoints/checkpoints.zip) and unzip it into a `checkpoints` folder in the root project directory on the same level as notebooks, sota, src folders.
+```bash
+chmod +x setup.sh
+```
+
+If the installation fails, you can manually download the `checkpoints.zip` file from [this link](https://storage.googleapis.com/dl-project-checkpoints/checkpoints.zip) and unzip it into a `checkpoints` folder in the root project directory on the same level as notebooks, sota, src folders.
 
 2. Install the required Python dependencies. You can do this with the following command:
 
-  ```bash
-  pip install -r requirements.txt
-  ```
+```bash
+pip install -r requirements.txt
+```
 
-  This command reads the `requirements.txt` file and installs all the listed packages.
+This command reads the `requirements.txt` file and installs all the listed packages.
 
 After following these setup instructions, you should be ready to run the code.
 
 ## Project Structure
 
-This project is organized into several key directories and files:
+This project is organised into several key directories and files:
 
 - `src/`: This directory contains the models that we developed for this project. Specifically, it includes implementations of U-Net, U-NetR, and SegFormer models from scratch with reference to research papers for the architecture.
 
@@ -43,8 +44,6 @@ This project is organized into several key directories and files:
 
 - `evaluation.ipynb`: This Jupyter notebook contains the code for evaluating our models. After training the models, we used this notebook to compute the Dice score on the test set for each model.
 
-
-
 ## Evaluation
 
 We evaluated our models using the Dice score metric. This metric provides a measure of the overlap between the predicted and actual segmentations, with a higher score indicating better performance.
@@ -53,6 +52,6 @@ We compared the performance of our models with that of the state-of-the-art Tran
 
 ## Running the Code
 
-To validate our test results, you can run the `evaluation.ipynb` Jupyter notebook. This notebook loads the trained weights of each model and computes the Dice score on the test set.
+To validate our test results, you can run the `evaluation.ipynb` Jupyter notebook. This notebook loads the trained weights of each model and computes the Dice Score on the test set.
 
 Before running the notebook, make sure you have the `checkpoints` folder in your project directory. This folder should contain the trained weights for all the models. You can obtain this folder by running the `setup.sh` script as described in the Setup section.
