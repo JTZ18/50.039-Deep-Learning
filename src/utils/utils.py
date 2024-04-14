@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import wandb
 import numpy as np
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 class OneClassDataset(torch.utils.data.Dataset):
     def __init__(self, dataset=None, split="train", transform=None):
@@ -193,5 +194,47 @@ def save_predictions_as_imgs(
             preds, f"{folder}/pred_{idx}.png"
         )
         torchvision.utils.save_image(y.unsqueeze(1), f"{folder}/{idx}.png")
+
+    model.train()
+
+def plot_predictions(loader, model, device="cuda", no_of_samples=8, img_dims=(256, 256)):
+    model_name = model.__class__.__name__
+    model.eval()
+    fig, axs = plt.subplots(2, 8, figsize=(20, 5))
+
+    for idx, (x, y) in enumerate(loader):
+        if idx == 1:  # We only want the first batch for plotting first 8 images in batch 1
+            break
+        x = x.to(device=device)
+        y = y.to(device).unsqueeze(1)
+
+        if img_dims != (256, 256):
+            # Resize to fit sota models
+            x = F.interpolate(x, size=img_dims)
+            y = F.interpolate(y, size=img_dims)
+
+        with torch.no_grad():
+            preds = torch.sigmoid(model(x))
+            preds = (preds > 0.5).float()
+
+        if img_dims != (256, 256):
+            # Resize back to original dims
+            preds = F.interpolate(preds, size=(256, 256))
+            y = F.interpolate(y, size=(256, 256))
+
+
+        for i in range(no_of_samples):
+            axs[0, i].imshow(y[i].squeeze().cpu(), cmap='gray')
+            axs[0, i].set_title(f"Ground Truth {i+1}")
+            axs[0, i].axis('off')
+
+            # Plot prediction
+            axs[1, i].imshow(preds[i].squeeze().cpu(), cmap='gray')
+            axs[1, i].set_title(f"Prediction {i+1}")
+            axs[1, i].axis('off')
+
+    plt.suptitle(f'Predictions from {model_name}', fontsize=16)
+    plt.tight_layout()
+    plt.show()
 
     model.train()
