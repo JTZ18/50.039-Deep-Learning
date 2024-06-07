@@ -33,12 +33,12 @@ if st.button("Load Model and Predict"):
         time.sleep(2)  # Simulate loading time
 
     # Load images
-    sample_image_path = f"./data/sample/{selected_image}"
-    prediction_image_path = f"./data/prediction/{selected_image}"
+    sample_image_path = f"./streamlit-app/data/sample/{selected_image}"
+    prediction_image_path = f"./streamlit-app/data/prediction/{selected_image}"
 
     # Adjust the file extension for the ground truth images
     ground_truth_image_name = os.path.splitext(selected_image)[0] + ".png"
-    ground_truth_image_path = f"./data/ground_truth/{ground_truth_image_name}"
+    ground_truth_image_path = f"./streamlit-app/data/ground_truth/{ground_truth_image_name}"
 
     sample_image = Image.open(sample_image_path)
     prediction_image = Image.open(prediction_image_path)
